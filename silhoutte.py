@@ -26,6 +26,9 @@ def visualize(edt_img, cdt_img):
     # img.save('my.png')
     # img.show()
 
+
+
+
 def shadow_distance(to_filename):
     '''
     finds outermost nonwhite
@@ -39,10 +42,16 @@ def shadow_distance(to_filename):
     filled in as black
     '''
     img = imageio.imread(to_filename) #read in as np array
-    shadow = np.where(img < 255, 0, 255) # not white
+    shadow = np.where(img < 255, 0, 1) # not white
+    img = imageio.imsave(to_filename, img)
+    input()
     edt_dist_matrix = distance_transform_edt(shadow) // 1
     cdt_dist_matrix = distance_transform_cdt(shadow) // 1 # need ints
-
+    edt_dist_matrix = softmax(edt_dist_matrix)
+    cdt_dist_matrix = softmax(cdt_dist_matrix)
+    imageio.imsave(to_filename[:-4] + 'edt' + to_filename[-4:], edt_dist_matrix)
+    imageio.imsave(to_filename[:-4] + 'cdt' + to_filename[-4:], cdt_dist_matrix)
+    input()
     return edt_dist_matrix, cdt_dist_matrix
 
 def eliminate_whitespace(to_filename, image_buffer=5):
