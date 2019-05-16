@@ -14,7 +14,7 @@ import torchvision.models as models
 import copy
 
 from custom import ContentLoss, StyleLoss, Normalization
-from utils import content_layers_default, style_layers_default
+from utils import content_layers_default, style_layers_default, im_reshape
 
 
 
@@ -80,6 +80,9 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     return model, style_losses, content_losses
 
 
+
+
+
 def get_input_optimizer(input_img):
     # this line to show that input is a parameter that requires a gradient
     optimizer = optim.LBFGS([input_img.requires_grad_()])
@@ -87,10 +90,14 @@ def get_input_optimizer(input_img):
 
 
 
+
+
 def run_style_transfer(cnn, normalization_mean, normalization_std,
                        content_img, style_img, input_img, device, num_steps=300,
                        style_weight=1000000, content_weight=1):
-    """Run the style transfer."""
+    """
+    Run the style transfer
+    """
     print('Building the style transfer model..')
     model, style_losses, content_losses = get_style_model_and_losses(cnn,
         normalization_mean, normalization_std, style_img, content_img, device)
@@ -147,18 +154,45 @@ def main():
     # desired size of the output image
     imsize = 512 if torch.cuda.is_available() else 128  # use small size if no gpu
 
+
+
     loader = transforms.Compose([
         transforms.Resize(imsize),  # scale imported image
         transforms.ToTensor()])  # transform it into a torch tensor
 
-    def image_loader(image_name):
-        image = Image.open(image_name)
+
+
+    def image_loader(image_name, reshape=False):
+
+        use_name = image_name
+
+        if reshape:
+            im_reshape(image_name)
+            use_name = image_name[:-4] + '_r' + image_name[-4:] # match the reshaped filename
+
+
+        image = Image.open(use_name)
         # fake batch dimension required to fit network's input dimensions
         image = loader(image).unsqueeze(0)
+
         return image.to(device, torch.float)
 
-    style_img = image_loader("./data/images/neural-style/picasso.jpg")
-    content_img = image_loader("./data/images/neural-style/dancing.jpg")
+
+
+    #style_img = image_loader("./data/images/neural-style/picasso.jpg")
+    style_img = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", True)
+
+    #content_img = image_loader("./data/images/neural-style/dancing.jpg")
+    content_img = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", True)
+
+
+
+
+
+
+
+
+
 
     assert style_img.size() == content_img.size(), \
         "we need to import style and content images of the same size"
@@ -166,6 +200,8 @@ def main():
     unloader = transforms.ToPILImage()  # reconvert into PIL image
 
     plt.ion()
+
+
 
     def imshow(tensor, title=None):
         image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
@@ -183,11 +219,11 @@ def main():
     imshow(content_img, title='Content Image')
 
 
-
-
-
     # import the model
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
+
+
+
 
     # vgg networks are trained on images with each channel normalized by mean [0.485, 0.456, 0.406] and
     # standard deviation [0.229, 0.224, 0.225]. Normalize the image using these values before sending it
@@ -196,9 +232,13 @@ def main():
     cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 
-    input_img = content_img.clone()
-    # if you want to use white noise instead uncomment the below line:
-    # input_img = torch.randn(content_img.data.size(), device=device)
+    USE_RANDOM_NOISE = False
+    if not USE_RANDOM_NOISE:
+        input_img = content_img.clone()
+    else:   # if you want to use white noise instead uncomment the below line:
+        input_img = torch.randn(content_img.data.size(), device=device)
+
+
 
     # add the original input image to the figure:
     plt.figure()
