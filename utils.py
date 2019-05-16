@@ -68,3 +68,5 @@ def load_alphabet(loader, image_name):
         img.append(img.to(device, torch.float))
 
     return images
+
+

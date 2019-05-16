@@ -19,12 +19,19 @@ def test(filename, to_filename):
     print("Input size {} Output size {}".format(ifile.shape, ofile.shape))
 
 def visualize(edt_img, cdt_img):
-    edt = Image.fromarray(edt_img, 'L')
-    cdt = Image.fromarray(cdt_img, 'L')
-    edt.show()
-    cdt.show()
+    # edt_img = (edt_img ** 2) 
+    # edt_img = edt_img / np.max(edt_img)
+    # edt_img = edt_img // 1
+    # cdt_img = (cdt_img ** 2)
+    # cdt_img = cdt_img / np.max(cdt_img)
+    # cdt_img = cdt_img // 1
+    # edt = Image.fromarray(edt_img, 'L')
+    # cdt = Image.fromarray(cdt_img, 'L')
+    # edt.show()
+    # cdt.show()
     # img.save('my.png')
     # img.show()
+    print ('just look at output image for now')
 
 
 
@@ -44,14 +51,12 @@ def shadow_distance(to_filename):
     img = imageio.imread(to_filename) #read in as np array
     shadow = np.where(img < 255, 0, 1) # not white
     img = imageio.imsave(to_filename, img)
-    input()
     edt_dist_matrix = distance_transform_edt(shadow) // 1
     cdt_dist_matrix = distance_transform_cdt(shadow) // 1 # need ints
-    edt_dist_matrix = softmax(edt_dist_matrix)
-    cdt_dist_matrix = softmax(cdt_dist_matrix)
+    # edt_dist_matrix = utils.softmax(edt_dist_matrix)
+    # cdt_dist_matrix = utilssoftmax(cdt_dist_matrix)
     imageio.imsave(to_filename[:-4] + 'edt' + to_filename[-4:], edt_dist_matrix)
     imageio.imsave(to_filename[:-4] + 'cdt' + to_filename[-4:], cdt_dist_matrix)
-    input()
     return edt_dist_matrix, cdt_dist_matrix
 
 def eliminate_whitespace(to_filename, image_buffer=5):
