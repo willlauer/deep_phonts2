@@ -52,6 +52,22 @@ class ContentLoss(nn.Module):
 
 
 
+class DistanceTransform(nn.Module):
+
+    def __init__(self, target):
+        super(DistanceTransform, self).__init__()
+        self.target = target.detach()
+
+        if len(self.target.shape) == 3:
+            # Then we have a color image and need to compress it to get the silhouette
+
+
+
+    def forward(self, x):
+        self.loss = None
+        return x
+
+
 
 
 class StyleLoss(nn.Module):
