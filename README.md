@@ -12,5 +12,6 @@ outputs (directory): contains all of the style transfer outputs, in form _style_
 For the milestone:
 
 distance transform implementation
+
 test black and white images as well as color images
 
