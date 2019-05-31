@@ -31,6 +31,31 @@ def gram_matrix(x):
 
 
 
+
+# TODO: define the classification model! should be similar to smallvgg. Actually, probably
+# could just use smallvgg
+
+class ClassificationModel(nn.Module):
+
+    # Run further forward passes through fc layers to do prediction
+    # These layers should be pre-trained to recognize the characters, and not be
+    # updated further
+
+    def __init__(self):
+
+        super(ClassificationModel, self).__init__()
+
+    def forward(self, x):
+        
+        # The idea is that at any point, we should be able to correctly predict the character that
+        # is being displayed
+        pass
+
+
+
+
+
+
 class ContentLoss(nn.Module):
 
     # Important! This is not a true pytorch loss function. If we want to define loss functions as
@@ -54,17 +79,25 @@ class ContentLoss(nn.Module):
 
 class DistanceTransform(nn.Module):
 
-    def __init__(self, target):
+    def __init__(self, target, heatmap):
+        """
+
+        :param target: content_image
+        """
         super(DistanceTransform, self).__init__()
+
         self.target = target.detach()
-
-        if len(self.target.shape) == 3:
-            # Then we have a color image and need to compress it to get the silhouette
-
-
+        self.heatmap = heatmap
 
     def forward(self, x):
-        self.loss = None
+
+        # x is the input image
+        # compute silhouette of the original content image (binary)
+        # then given input image x, compute heat
+
+
+        self.loss = F.mse_loss(self.target * self.heatmap, x * self.heatmap)
+        #self.loss = torch.sum(1/2 * (self.target * self.heatmap - x * self.heatmap) ** 2)
         return x
 
 

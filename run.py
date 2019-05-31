@@ -13,15 +13,31 @@ import torchvision.models as models
 
 import copy
 
-from custom import ContentLoss, StyleLoss, Normalization
-from utils import content_layers_default, style_layers_default, im_reshape
+from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, Classification
+from utils import * #content_layers_default, style_layers_default, im_reshape
 
-
+from silhoutte import get_heatmap_from_greyscale
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
-                               style_img, content_img, device,
+                               style_img, content_img, device, heatmap,
                                content_layers=content_layers_default,
-                               style_layers=style_layers_default):
+                               style_layers=style_layers_default, use_classification_loss=False):
+
+    """
+
+    :param cnn:
+    :param normalization_mean:
+    :param normalization_std:
+    :param style_img:
+    :param content_img:
+    :param device:
+    :param heatmap: should be a tensor as in the paper
+
+    :param content_layers:
+    :param style_layers:
+    :return:
+    """
+
     cnn = copy.deepcopy(cnn)
 
     # normalization module
@@ -36,8 +52,23 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     # to put in modules that are supposed to be activated sequentially
     model = nn.Sequential(normalization)
 
+
     i = 0  # increment every time we see a conv
     for layer in cnn.children():
+
+        if i == 0:
+            """
+            Only add this for the first layer
+            """
+            USE_DISTANCE = False
+
+            if USE_DISTANCE:
+                target = model(content_img).detach()
+                distance_loss = DistanceTransform(target, heatmap)
+                model.add_module("distance_loss", distance_loss)
+            else:
+                distance_loss = None
+
         if isinstance(layer, nn.Conv2d):
             i += 1
             name = 'conv_{}'.format(i)
@@ -75,9 +106,14 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
         if isinstance(model[i], ContentLoss) or isinstance(model[i], StyleLoss):
             break
 
+
+
     model = model[:(i + 1)]
 
-    return model, style_losses, content_losses
+
+
+
+    return model, style_losses, content_losses, distance_loss
 
 
 
@@ -93,18 +129,23 @@ def get_input_optimizer(input_img):
 
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
-                       content_img, style_img, input_img, device, num_steps=300,
-                       style_weight=1000000, content_weight=1):
+                       content_img, style_img, input_img, device, heatmap, num_steps=300,
+                       style_weight=1000000, content_weight=1, distance_weight=1):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
-    model, style_losses, content_losses = get_style_model_and_losses(cnn,
-        normalization_mean, normalization_std, style_img, content_img, device)
+
+
+
+    model, style_losses, content_losses, dl = get_style_model_and_losses(cnn,
+        normalization_mean, normalization_std, style_img, content_img, device, heatmap)
     optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
     run = [0]
+
+
     while run[0] <= num_steps:
 
         def closure():
@@ -124,17 +165,32 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             style_score *= style_weight
             content_score *= content_weight
 
-            loss = style_score + content_score
+
+            if dl is not None:
+                distance_score = distance_weight * dl.loss
+                loss = style_score + content_score + distance_score
+            else:
+                loss = style_score + content_score
+
             loss.backward()
 
             run[0] += 1
             if run[0] % 50 == 0:
                 print("run {}:".format(run))
-                print('Style Loss : {:4f} Content Loss: {:4f}'.format(
-                    style_score.item(), content_score.item()))
+
+                if dl is not None:
+                    print('Style Loss : {:4f} Content Loss: {:4f} Distance Loss: {:4f}'.format(
+                        style_score.item(), content_score.item(), distance_score.item()))
+                else:
+                    print('Style Loss : {:4f} Content Loss: {:4f}'.format(
+                        style_score.item(), content_score.item()))
                 print()
 
-            return style_score + content_score
+            if dl is not None:
+                return style_score + content_score + distance_score
+            else:
+                return style_score + content_score
+
 
         optimizer.step(closure)
 
@@ -162,7 +218,7 @@ def main():
 
 
 
-    def image_loader(image_name, reshape=False):
+    def image_loader(image_name, reshape=False, get_heatmap=False):
 
         use_name = image_name
 
@@ -172,20 +228,30 @@ def main():
 
 
         image = Image.open(use_name)
+
+        # Get the heatmap for the content image
+        if get_heatmap:
+
+            # TODO: for heatmap, convert directly from ndarray to tensor, then unsqueeze and send to device
+
+            greyscale = image.convert("L")
+            heatmap = loader(get_heatmap_from_greyscale(greyscale)).unsqueeze(0).to(device, torch.float)
+        else:
+            heatmap = None
+
+
         # fake batch dimension required to fit network's input dimensions
         image = loader(image).unsqueeze(0)
 
-        return image.to(device, torch.float)
+        return image.to(device, torch.float), heatmap
 
 
 
     #style_img = image_loader("./data/images/neural-style/picasso.jpg")
-    style_img = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", True)
+    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", True)
 
     #content_img = image_loader("./data/images/neural-style/dancing.jpg")
-    content_img = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", True)
-
-
+    content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", True, True)
 
 
 
@@ -223,6 +289,11 @@ def main():
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
 
+    if CLASSIFIER_IS_TRAINED:
+        
+
+        classifier = train_classifier()
+
 
 
     # vgg networks are trained on images with each channel normalized by mean [0.485, 0.456, 0.406] and
@@ -246,7 +317,7 @@ def main():
 
 
     output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                                content_img, style_img, input_img, device)
+                                content_img, style_img, input_img, device, heatmap)
 
     plt.figure()
     imshow(output, title='Output Image')
