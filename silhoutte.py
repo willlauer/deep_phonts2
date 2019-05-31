@@ -34,6 +34,19 @@ def visualize(edt_img, cdt_img):
     print ('just look at output image for now')
 
 
+def get_heatmap_from_greyscale(img):
+    """
+    :param img: a PIL image object
+    :return: the heatmap output from distance_transform_edt
+    """
+    arr = np.array(img)
+    print('shape', arr.shape)
+
+    shadow = np.where(arr < 255, 0, 1)
+    edt_dist_matrix = distance_transform_edt(shadow) // 1
+
+    return Image.fromarray(edt_dist_matrix)
+
 
 
 def shadow_distance(to_filename):
