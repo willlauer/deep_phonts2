@@ -79,26 +79,28 @@ class ContentLoss(nn.Module):
 
 class DistanceTransform(nn.Module):
 
-    def __init__(self, target, heatmap):
+    def __init__(self, x_content, heatmap):
         """
 
         :param target: content_image
         """
         super(DistanceTransform, self).__init__()
 
-        self.target = target.detach()
-        self.heatmap = heatmap
+        self.x_content = x_content.detach()
+        self.heatmap = heatmap.detach()
+        self.x_content_times_heatmap = self.x_content * self.heatmap
+        self.x_content_times_heatmap = self.x_content_times_heatmap.detach()
 
-    def forward(self, x):
+    def forward(self, x_gen):
 
         # x is the input image
         # compute silhouette of the original content image (binary)
         # then given input image x, compute heat
 
 
-        self.loss = F.mse_loss(self.target * self.heatmap, x * self.heatmap)
+        self.loss = F.mse_loss(self.x_content_times_heatmap, x_gen * self.heatmap)
         #self.loss = torch.sum(1/2 * (self.target * self.heatmap - x * self.heatmap) ** 2)
-        return x
+        return x_gen
 
 
 
