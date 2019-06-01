@@ -17,9 +17,8 @@ params = {
 
     "print_every": 10,
 
-
-    "target_img_width": 64,
-    "target_img_height": 64
+    "input_complete_dim": 160,
+    "input_character_dim": 32
 
 
 

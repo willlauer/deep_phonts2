@@ -271,15 +271,12 @@ def main():
         transforms.ToTensor()])  # transform it into a torch tensor
 
 
-    
-
-
-
-    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", reshape=True)
+    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png")
     #style_img, _ = ut_image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png",\
     #                                loader, device, reshape=True)
 
-    content_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", reshape=True)
+    content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png",
+                                        get_heatmap=True)
     #content_img, heatmap = ut_image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", \
     #                                        loader, device, reshape=True, get_heatmap=True)
 
@@ -294,17 +291,13 @@ def main():
     assert style_img.size() == content_img.size(), \
         "we need to import style and content images of the same size"
 
-    unloader = transforms.ToPILImage(mode="RGB")  # reconvert into PIL image
+    unloader = transforms.ToPILImage()  # reconvert into PIL image
 
     plt.ion()
 
     def imshow(tensor, title=None):
         image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
         image = image.squeeze(0)  # remove the fake batch dimension
-        #print(image.shape)
-        
-        #image = torch.transpose(torch.transpose(image, 0, 1), 1, 2)
-        #print(image.shape)
         image = unloader(image)
         plt.imshow(image)
         if title is not None:
@@ -332,15 +325,9 @@ def main():
     # error, which the pylint comments disables locally
     # pylint: disable=E1121
     print("starting model creation")
-    classification = load_or_train_classifier("classification_model.pt")
+    #classification = load_or_train_classifier("classification_model.pt")
     print("ending model creation")
     # pylint: enable=E1121
-
-
-
-    exit(0)
-
-
 
 
     # vgg networks are trained on images with each channel normalized by mean [0.485, 0.456, 0.406] and
