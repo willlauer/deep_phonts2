@@ -68,8 +68,8 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             USE_DISTANCE = False
 
             if USE_DISTANCE:
-                target = model(content_img).detach()
-                distance_loss = DistanceTransform(target, heatmap)
+                x_content = model(content_img).detach()
+                distance_loss = DistanceTransform(x_content, heatmap)
                 model.add_module("distance_loss", distance_loss)
             else:
                 distance_loss = None
@@ -214,7 +214,7 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             style_score *= style_weight
             content_score *= content_weight
 
-
+            loss = 0
             if dl is not None:
                 distance_score = distance_weight * dl.loss
                 loss = style_score + content_score + distance_score
