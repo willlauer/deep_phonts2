@@ -25,36 +25,11 @@ def gram_matrix(x):
 
     features = x.view(a * b, c * d)  # resise F_XL into \hat F_XL
 
-    G = torch._C.mm(features, features.t())  # compute the gram product
+    G = torch.mm(features, features.t())  # compute the gram product
 
     # we 'normalize' the values of the gram matrix
     # by dividing by the number of element in each feature maps.
     return G.div(a * b * c * d)
-
-
-
-
-
-# TODO: define the classification model! should be similar to smallvgg. Actually, probably
-# could just use smallvgg
-
-class ClassificationModel(nn.Module):
-
-    # Run further forward passes through fc layers to do prediction
-    # These layers should be pre-trained to recognize the characters, and not be
-    # updated further
-
-    def __init__(self):
-
-        super(ClassificationModel, self).__init__()
-
-    def forward(self, x):
-        
-        # The idea is that at any point, we should be able to correctly predict the character that
-        # is being displayed
-        pass
-
-
 
 
 
@@ -128,8 +103,8 @@ class Normalization(nn.Module):
         # .view the mean and std to make them [C x 1 x 1] so that they can
         # directly work with image Tensor of shape [B x C x H x W].
         # B is batch size. C is number of channels. H is height and W is width.
-        self.mean = torch.from_numpy(np.array(mean)).view(-1, 1, 1)
-        self.std = torch.from_numpy(np.array(std)).view(-1, 1, 1)
+        self.mean = torch.from_numpy(np.array(mean)).view(-1, 1, 1).type(torch.float)
+        self.std = torch.from_numpy(np.array(std)).view(-1, 1, 1).type(torch.float)
 
     def forward(self, img):
         # normalize img
