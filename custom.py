@@ -12,6 +12,9 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 
 import copy
+import numpy as np
+
+
 
 
 def gram_matrix(x):
@@ -22,7 +25,7 @@ def gram_matrix(x):
 
     features = x.view(a * b, c * d)  # resise F_XL into \hat F_XL
 
-    G = torch.mm(features, features.t())  # compute the gram product
+    G = torch._C.mm(features, features.t())  # compute the gram product
 
     # we 'normalize' the values of the gram matrix
     # by dividing by the number of element in each feature maps.
@@ -125,8 +128,8 @@ class Normalization(nn.Module):
         # .view the mean and std to make them [C x 1 x 1] so that they can
         # directly work with image Tensor of shape [B x C x H x W].
         # B is batch size. C is number of channels. H is height and W is width.
-        self.mean = torch.tensor(mean).view(-1, 1, 1)
-        self.std = torch.tensor(std).view(-1, 1, 1)
+        self.mean = torch.from_numpy(np.array(mean)).view(-1, 1, 1)
+        self.std = torch.from_numpy(np.array(std)).view(-1, 1, 1)
 
     def forward(self, img):
         # normalize img

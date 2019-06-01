@@ -1,3 +1,4 @@
+
 from __future__ import print_function
 
 import torch
@@ -12,6 +13,10 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 
 import copy
+
+from solver import Solver
+
+import numpy as np
 
 from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, Classification
 from utils import * #content_layers_default, style_layers_default, im_reshape
@@ -127,6 +132,50 @@ def get_input_optimizer(input_img):
 
 
 
+def load_or_train_classifier(model_name):
+    
+    """
+    Searches for a particular model name. If it exists, then load the saved weights and return the model.
+    If it doesn't exist, then create a new model, train it, and then return it
+    """
+
+    # (num_classes, in_channel, c1, c2, c3)
+
+
+    model = SmallVGG(26, 3, 8, 8, 5)
+
+    training_batch_size, val_batch_size = 3000, 1000
+
+    model_already_trained = False
+    path = "./saved_models/"
+    files = [f for f in listdir(path) if isfile(join(path, f))]
+    for f in files:
+        if f.find(model_name) != -1:
+            model_already_trained = True 
+            break
+            
+    # load the saved model
+    if model_already_trained:
+        model.load_state_dict(torch.load("./saved_models/" + model_name))
+        return model
+
+    # otherwise we have to train it 
+    else:
+        train_loader, val_loader = get_classification_data_loader(training_batch_size, val_batch_size)
+
+        solver = Solver(model, train_loader, val_loader)
+        solver.train(params["train_num_epochs"])
+
+        # after training, save the model
+        torch.save(model.state_dict(), path + "/" + model_name)
+
+    return model
+
+
+
+
+
+
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
                        content_img, style_img, input_img, device, heatmap, num_steps=300,
@@ -202,8 +251,13 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
 
 
+
+
+
+
 def main():
 
+    
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -217,61 +271,40 @@ def main():
         transforms.ToTensor()])  # transform it into a torch tensor
 
 
-
-    def image_loader(image_name, reshape=False, get_heatmap=False):
-
-        use_name = image_name
-
-        if reshape:
-            im_reshape(image_name)
-            use_name = image_name[:-4] + '_r' + image_name[-4:] # match the reshaped filename
-
-
-        image = Image.open(use_name)
-
-        # Get the heatmap for the content image
-        if get_heatmap:
-
-            # TODO: for heatmap, convert directly from ndarray to tensor, then unsqueeze and send to device
-
-            greyscale = image.convert("L")
-            heatmap = loader(get_heatmap_from_greyscale(greyscale)).unsqueeze(0).to(device, torch.float)
-        else:
-            heatmap = None
-
-
-        # fake batch dimension required to fit network's input dimensions
-        image = loader(image).unsqueeze(0)
-
-        return image.to(device, torch.float), heatmap
+    
 
 
 
-    #style_img = image_loader("./data/images/neural-style/picasso.jpg")
-    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", True)
+    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png", reshape=True)
+    #style_img, _ = ut_image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png",\
+    #                                loader, device, reshape=True)
 
-    #content_img = image_loader("./data/images/neural-style/dancing.jpg")
-    content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", True, True)
-
-
-
-
+    content_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", reshape=True)
+    #content_img, heatmap = ut_image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", \
+    #                                        loader, device, reshape=True, get_heatmap=True)
 
 
 
+    # print(style_img.shape, content_img.shape)
+
+
+
+    # Show some of the images from the dataset
 
     assert style_img.size() == content_img.size(), \
         "we need to import style and content images of the same size"
 
-    unloader = transforms.ToPILImage()  # reconvert into PIL image
+    unloader = transforms.ToPILImage(mode="RGB")  # reconvert into PIL image
 
     plt.ion()
-
-
 
     def imshow(tensor, title=None):
         image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
         image = image.squeeze(0)  # remove the fake batch dimension
+        #print(image.shape)
+        
+        #image = torch.transpose(torch.transpose(image, 0, 1), 1, 2)
+        #print(image.shape)
         image = unloader(image)
         plt.imshow(image)
         if title is not None:
@@ -285,22 +318,36 @@ def main():
     imshow(content_img, title='Content Image')
 
 
-    # import the model
+
+
+
+
+    # import the model from pytorch pretrained models
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
 
-    if CLASSIFIER_IS_TRAINED:
-        
+    # get the classification model
+    
+    # KEEP THESE PYLINT COMMENTS! Not necessary, but vscode was giving a false-positive "too-many-arguments"
+    # error, which the pylint comments disables locally
+    # pylint: disable=E1121
+    print("starting model creation")
+    classification = load_or_train_classifier("classification_model.pt")
+    print("ending model creation")
+    # pylint: enable=E1121
 
-        classifier = train_classifier()
+
+
+    exit(0)
+
 
 
 
     # vgg networks are trained on images with each channel normalized by mean [0.485, 0.456, 0.406] and
     # standard deviation [0.229, 0.224, 0.225]. Normalize the image using these values before sending it
     # to the network
-    cnn_normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
-    cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
+    cnn_normalization_mean = torch.from_numpy(np.array([0.485, 0.456, 0.406])).to(device)
+    cnn_normalization_std = torch.from_numpy(np.array([0.229, 0.224, 0.225])).to(device)
 
 
     USE_RANDOM_NOISE = False
