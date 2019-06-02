@@ -25,7 +25,6 @@ USE_CLASSIFICATION = True
 my_dtype = torch.float
 
 # desired depth layers to compute style/content losses :
-content_layers_default = ['conv_4']
 style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
 
 
@@ -301,9 +300,6 @@ def get_classification_data_loader(training_batch_size, val_batch_size):
     visualize_samples(val_data_loader)
 
     return train_data_loader, val_data_loader
-
-
-
 
 def visualize_samples(loader):
 
