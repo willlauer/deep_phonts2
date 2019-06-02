@@ -8,4 +8,5 @@ outputs (directory): contains all of the style transfer outputs, in form _style_
 
 # Data is from:
 https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
-(We're only using Capitals_colorGrad64)
+We're only using Capitals_colorGrad64. Download it, move it into the main deep_phonts2 directory, and run 
+tar -zxvf Capitals_colorGrad64.tar.gz -C ./data/
