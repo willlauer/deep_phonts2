@@ -6,12 +6,7 @@ images (directory): containing all of the image data that we use as inputs to th
 
 outputs (directory): contains all of the style transfer outputs, in form _style_[alphabet1]_content_[alphabet2].png 
 
-
-
-
-For the milestone:
-
-distance transform implementation
-
-test black and white images as well as color images
-
+# Data is from:
+https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
+We're only using Capitals_colorGrad64. Download it, move it into the main deep_phonts2 directory, and run 
+tar -zxvf Capitals_colorGrad64.tar.gz -C ./data/
