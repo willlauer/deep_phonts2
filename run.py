@@ -26,7 +26,7 @@ from utils import * #style_layers_default, im_reshape
 
 from silhoutte import get_heatmap_from_greyscale
 
-def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
+def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
                                prim_style_img, sec_style_img, device, heatmap,
                                style_layers=style_layers_default, use_classification_loss=False):
 
@@ -120,7 +120,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
     model = model[:(i + 1)]
 
-    return model, prim_style_losses, sec_style_losses, distance_loss
+    return model, prim_style_losses, sec_style_losses, distance_loss, classification_loss
 
 def get_input_optimizer(input_img):
     # this line to show that input is a parameter that requires a gradient
@@ -167,17 +167,19 @@ def load_or_train_classifier(model_name):
 
     return model
 
-def run_style_transfer(cnn, normalization_mean, normalization_std,
+def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
                        prim_style_img, sec_style_img, input_img, device, heatmap, num_steps=300,
-                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=1):
+                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=1, classifier_weight=1):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
 
-    model, prim_style_losses, sec_style_losses, distance_losses = get_style_model_and_losses(cnn,
-                    normalization_mean, normalization_std, prim_style_img, sec_style_img, device, heatmap)
-                    optimizer = get_input_optimizer(input_img)
+    model, prim_style_losses, sec_style_losses, distance_loss, classifier_loss = get_style_model_and_losses(cnn,
+                    classifier, normalization_mean, normalization_std, prim_style_img, 
+                    sec_style_img, device, heatmap)
+    
+    optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
     run = [0]
@@ -201,12 +203,15 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             prim_style_score *= prim_style_weight
             sec_style_score *= sec_style_weight
 
-            loss = 0
-            if distance_losses is not None:
-                distance_score = distance_weight * distance_losses.loss
-                loss = prim_style_score + sec_style_score + distance_score
-            else:
-                loss = prim_style_score + sec_style_score
+            loss = prim_style_score + sec_style_score
+            
+            if distance_loss is not None:
+                distance_score = distance_weight * distance_loss.loss
+                loss += distance_score
+            
+            if classifier_loss is not None:
+                classifier_score = classifier_weight * classifier_loss.loss
+                loss += classifier_score
 
             loss.backward()
 
@@ -215,12 +220,12 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
                 print("run {}:".format(run))
 
                 if classifier_loss is not None:
-                    print('Style Loss : {:4f} Content Loss: {:4f} Classifier Loss: {:4f}'.format(
-                        style_score.item(), content_score.item(), classifier_score.item()))
+                    print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f} Classifier Loss: {:4f}'.format(
+                        prim_style_score.item(), sec_style_score.item(), classifier_score.item()))
                 
                 elif distance_loss is not None:
-                    print('Style Loss : {:4f} Content Loss: {:4f} Distance Loss: {:4f}'.format(
-                        style_score.item(), content_score.item(), distance_score.item()))
+                    print('Primary Style Loss : {:4f} Secondary STyle Loss: {:4f} Distance Loss: {:4f}'.format(
+                        prim_style_score.item(), sec_style_score.item(), distance_score.item()))
                 
                 else:
                     print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f}'.format(
