@@ -21,17 +21,6 @@ from hyper_params import params
 
 import numpy as np
 
-<<<<<<< HEAD
-from custom import *
-from utils import *
-
-from silhoutte import get_heatmap_from_greyscale
-
-def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
-                               style_img, content_img, device, heatmap,
-                               content_layers=content_layers_default,
-                               style_layers=style_layers_default):
-=======
 from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, Classification
 from utils import * #style_layers_default, im_reshape
 
@@ -40,7 +29,6 @@ from silhoutte import get_heatmap_from_greyscale
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                prim_style_img, sec_style_img, device, heatmap,
                                style_layers=style_layers_default, use_classification_loss=False):
->>>>>>> 82fe6bde5c37cd8e8123e39a323de5f708a887d6
 
     """
     :param cnn:
@@ -112,27 +100,6 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
         model.add_module(name, layer)
 
-<<<<<<< HEAD
-        #print('content layers', content_layers)
-        #print('style layers', style_layers)
-
-
-        if name in content_layers:
-            # add content loss:
-            #print('c', name)
-            target = model(content_img).detach()
-            content_loss = ContentLoss(target)
-            model.add_module("content_loss_{}".format(i), content_loss)
-            content_losses.append(content_loss)
-
-        if name in style_layers:
-            # add style loss:
-            #print('s', name)
-            target_feature = model(style_img).detach()
-            style_loss = StyleLoss(target_feature)
-            model.add_module("style_loss_{}".format(i), style_loss)
-            style_losses.append(style_loss)
-=======
         if name in style_layers:
             # add primary style loss:
             target_feature = model(prim_style_img).detach()
@@ -145,7 +112,6 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             sec_style_loss = StyleLoss(target)
             model.add_module("sec_style_loss_{}".format(i), sec_style_loss)
             sec_style_losses.append(sec_style_loss)
->>>>>>> 82fe6bde5c37cd8e8123e39a323de5f708a887d6
 
     # now we trim off the layers after the last content and style losses
     for i in range(len(model) - 1, -1, -1):
