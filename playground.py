@@ -6,7 +6,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import torch.nn.functional as F
+import sys
 
+
+
+use_distance = '-d' in sys.argv
+use_classification = '-c' in sys.argv
+
+print(use_distance, use_classification)
+
+
+"""
 data = np.array([[0.1, 0.1, 0.8], [0.2, 0.3, 0.5], [0.05, 0.1, 0.85]])
 data = torch.from_numpy(data)
 
@@ -14,7 +24,7 @@ y = np.array([2, 2, 2])
 y = torch.from_numpy(y)
 
 print(F.cross_entropy(data, y))
-
+"""
 
 
 

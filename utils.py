@@ -18,7 +18,7 @@ import time
 
 
 USE_DISTANCE = False
-USE_CLASSIFICATION = False
+USE_CLASSIFICATION = True
 
 
 # constant type for image, heatmap, and label tensors

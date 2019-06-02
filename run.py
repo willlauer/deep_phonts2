@@ -25,10 +25,13 @@ from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, 
 from utils import * #style_layers_default, im_reshape
 
 from silhoutte import get_heatmap_from_greyscale
+import sys
+
 
 def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
                                prim_style_img, sec_style_img, device, heatmap,
-                               style_layers=style_layers_default, use_classification_loss=False):
+                               style_layers=style_layers_default, use_distance=False,
+                               use_classification=False):
 
     """
     :param cnn:
@@ -45,6 +48,8 @@ def get_style_model_and_losses(cnn, classifier, normalization_mean, normalizatio
     :return:
     """
     print('get style model and losses')
+    print('use_distance, use_classification', use_distance, use_classification)
+
     cnn = copy.deepcopy(cnn)
 
     # normalization module
@@ -66,7 +71,7 @@ def get_style_model_and_losses(cnn, classifier, normalization_mean, normalizatio
             """
             Only add these for the first layer
             """
-            if USE_DISTANCE:
+            if use_distance:
                 x_content = model(sec_style_img).detach()
                 distance_loss = DistanceTransform(x_content, heatmap)
                 model.add_module("distance_loss", distance_loss)
@@ -74,7 +79,7 @@ def get_style_model_and_losses(cnn, classifier, normalization_mean, normalizatio
                 distance_loss = None
 
 
-            if USE_CLASSIFICATION:
+            if use_classification:
                 classification_loss = ClassificationLoss(classifier)
                 model.add_module("classification_loss", classification_loss)
             else:
@@ -169,15 +174,18 @@ def load_or_train_classifier(model_name):
 
 def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
                        prim_style_img, sec_style_img, input_img, device, heatmap, num_steps=300,
-                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=1, classifier_weight=1):
+                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=1, classifier_weight=500,
+                       use_distance=False, use_classification=False):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
+    print('use_distance, use_classification', use_distance, use_classification)
+
 
     model, prim_style_losses, sec_style_losses, distance_loss, classifier_loss = get_style_model_and_losses(cnn,
                     classifier, normalization_mean, normalization_std, prim_style_img, 
-                    sec_style_img, device, heatmap)
+                    sec_style_img, device, heatmap, use_distance=use_distance, use_classification=use_classification)
     
     optimizer = get_input_optimizer(input_img)
 
@@ -211,7 +219,7 @@ def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
             
             if classifier_loss is not None:
                 classifier_score = classifier_weight * classifier_loss.loss
-                loss += classifier_score
+                loss += classifier_score.squeeze()
 
             loss.backward()
 
@@ -271,6 +279,11 @@ def visualize(a, b, c, d):
 
 def main():
 
+    use_distance = '-d' in sys.argv
+    use_classification = '-c' in sys.argv
+
+    print('use_distance, use_classification', use_distance, use_classification)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # desired size of the output image
@@ -289,26 +302,6 @@ def main():
     assert prim_style_img.size() == sec_style_img.size(), \
         "we need to import style and content images of the same size"
 
-    #unloader = transforms.ToPILImage()  # reconvert into PIL image
-
-    #plt.ion()
-
-    """
-    def imshow(tensor, title=None):
-        image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
-        image = image.squeeze(0)  # remove the fake batch dimension
-        image = unloader(image)
-        plt.imshow(image)
-        if title is not None:
-            plt.title(title)
-        plt.pause(0.001)  # pause a bit so that plots are updated
-
-    # print content and style images
-    plt.figure()
-    imshow(prim_style_img, title='Primary Style Image')
-    plt.figure()
-    imshow(sec_style_img, title='Secondary Style Image')
-    """
 
     # import the model from pytorch pretrained models
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
@@ -343,7 +336,8 @@ def main():
     input_img_copy = input_img.clone() # since we modify the input image
 
     output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
-                                prim_style_img, sec_style_img, input_img, device, heatmap)
+                                prim_style_img, sec_style_img, input_img, device, heatmap,
+                                use_distance=use_distance, use_classification=use_classification)
 
     #plt.figure()
     #imshow(output, title='Output Image')
