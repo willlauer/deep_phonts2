@@ -7,7 +7,7 @@ images (directory): containing all of the image data that we use as inputs to th
 outputs (directory): contains all of the style transfer outputs, in form _style_[alphabet1]_content_[alphabet2].png 
 
 
-
+https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
 
 For the milestone:
 
