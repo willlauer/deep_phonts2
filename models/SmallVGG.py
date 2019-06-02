@@ -15,7 +15,7 @@ class SmallVGG(nn.Module):
         self.conv2 = nn.Conv2d(c1, c2, (3,3), stride=1, bias=True, padding=1)
         self.conv3 = nn.Conv2d(c2, c3, (3,3), stride=1, bias=True, padding=1)
 
-        self.fc = nn.Linear(in_channel*28*28, num_classes, bias=True)
+        self.fc = nn.Linear(c3*32*32, num_classes, bias=True)
 
         nn.init.kaiming_normal_(self.conv1.weight)
         nn.init.kaiming_normal_(self.conv2.weight)
@@ -25,6 +25,7 @@ class SmallVGG(nn.Module):
         # mode should be set to either 'classify' or 'transfer'
         self.mode = 'classify'
 
+        print(self.mode)
 
     def flatten(self, x):
         return x.view(x.shape[0],-1)
@@ -58,7 +59,9 @@ class SmallVGG(nn.Module):
                     transfer. Style is a list of gram matrices, and content is the output of the last conv layer
         """
         # {conv2d (pool - maybe?)} x L; fully_connected layer for classification
-        
+        #print('FORWARD')
+        #print(x.shape)
+
         r1 = F.relu(self.conv1(x))
         r2 = F.relu(self.conv2(r1))
         r3 = F.relu(self.conv3(r2))

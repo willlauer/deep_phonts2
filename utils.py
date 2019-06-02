@@ -14,7 +14,8 @@ from torch import nn
 from silhoutte import get_heatmap_from_greyscale
 from hyper_params import params
 
-from custom import ClassificationModel
+import time
+
 
 
 
@@ -182,9 +183,9 @@ def create_special_font_dataset(device, path, mode):
     data_x = torch.zeros((0, 3, params["input_complete_dim"], params["input_complete_dim"])).type(my_dtype)
     data_y = torch.zeros((0,)).type(torch.int)
 
-
-    for i, file in enumerate(files):
-        print(i)
+    num_files = len(files)
+    for i, file in enumerate(files[:1000]):
+        print(i, '/', num_files)
         # (26, 3, 64, 64), (26,)
         # image_loader returns the square image (160,160,3)
         # we then need to reshape it to be the 25 characters that we care about
@@ -275,6 +276,8 @@ def get_classification_data_loader(training_batch_size, val_batch_size):
     val_data_x = torch.load("./data/val_data_x.pt")
     val_data_y = torch.load("./data/val_data_y.pt")
 
+    print(train_data_x.shape, train_data_y.shape)
+
     print("train, val classification data successfully loaded")
 
     # Create the training and validation loaders using tensor datasets constructed from the 
@@ -293,6 +296,8 @@ def get_classification_data_loader(training_batch_size, val_batch_size):
 
     print("created val loader")                
 
+    visualize_samples(val_data_loader)
+
     return train_data_loader, val_data_loader
 
 
@@ -300,17 +305,19 @@ def get_classification_data_loader(training_batch_size, val_batch_size):
 
 def visualize_samples(loader):
 
-	examples = enumerate(loader)
-	batch_idx, (example_data, example_targets) = next(examples)
+    examples = enumerate(loader)
+    batch_idx, (example_data, example_targets) = next(examples)
+    print(example_data[0].shape, example_targets[0].shape)
+    fig = plt.figure()
+    for i in range(6):
+        plt.subplot(2,3,i+1)
+        plt.tight_layout()
+        example_data2 = np.transpose(example_data[i].numpy(), (1, 2, 0))
+        plt.imshow(example_data2, interpolation='none')
+        plt.title('Ground truth: {}'.format(example_targets[i]))
+        #print(example_data[i][0])
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()
 
-	fig = plt.figure()
-	for i in range(6):
-		plt.subplot(2,3,i+1)
-		plt.tight_layout()
-		plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
-		plt.title('Ground truth: {}'.format(example_targets[i]))
-		#print(example_data[i][0])
-		plt.xticks([])
-		plt.yticks([])
-	plt.show()
 

@@ -15,6 +15,9 @@ import torchvision.models as models
 import copy
 
 from solver import Solver
+from tqdm import tqdm
+
+from hyper_params import params
 
 import numpy as np
 
@@ -140,16 +143,16 @@ def load_or_train_classifier(model_name):
     """
 
     # (num_classes, in_channel, c1, c2, c3)
+    print("Load or train classifier")
 
+    model = SmallVGG(25, 3, 8, 8, 5)
 
-    model = SmallVGG(26, 3, 8, 8, 5)
-
-    training_batch_size, val_batch_size = 3000, 1000
+    training_batch_size, val_batch_size = params['batch_size_train'], params['batch_size_val']
 
     model_already_trained = False
     path = "./saved_models/"
     files = [f for f in listdir(path) if isfile(join(path, f))]
-    for f in files:
+    for f in tqdm(files):
         if f.find(model_name) != -1:
             model_already_trained = True 
             break
@@ -161,6 +164,7 @@ def load_or_train_classifier(model_name):
 
     # otherwise we have to train it 
     else:
+        print("Training the model")
         train_loader, val_loader = get_classification_data_loader(training_batch_size, val_batch_size)
 
         solver = Solver(model, train_loader, val_loader)
@@ -257,8 +261,6 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
 def main():
 
-    
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # desired size of the output image
@@ -325,7 +327,7 @@ def main():
     # error, which the pylint comments disables locally
     # pylint: disable=E1121
     print("starting model creation")
-    #classification = load_or_train_classifier("classification_model.pt")
+    classification = load_or_train_classifier("classification_model.pt")
     print("ending model creation")
     # pylint: enable=E1121
 
