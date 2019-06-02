@@ -228,8 +228,8 @@ def create_special_font_dataset(device, path, mode):
 
     # now save the data to file so that we don't have to do this again
     print("saving under names:", mode + "_data_x.pt", mode + "_data_y.pt")
-    torch.save(data_x, mode + "_data_x.pt")
-    torch.save(data_y, mode + "_data_y.pt")
+    torch.save(data_x, './data/' + mode + "_data_x.pt")
+    torch.save(data_y, './data/' + mode + "_data_y.pt")
 
     print('count = ', count)
 
