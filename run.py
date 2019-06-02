@@ -241,6 +241,34 @@ def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
 
     return input_img
 
+
+
+def visualize(a, b, c, d):
+    """
+    Display the four images in a single plot
+    a, b, c, d => prim_style, sec_style, input_img, output_img
+    """
+    a, b, c, d = a.cpu().clone(), b.cpu().clone(), c.cpu().clone(), d.cpu().clone()
+    a, b, c, d = a.squeeze(), b.squeeze(), c.squeeze(), d.squeeze()
+
+    unloader = transforms.ToPILImage()  # reconvert into PIL image
+
+    titles = ["prim_style", "sec_style", "input_img", "output_img"]
+    li = [unloader(a), unloader(b), unloader(c), unloader(d)]
+    
+    fig = plt.figure()
+
+    for i in range(len(li)):
+        s = plt.subplot(2, 2, (i+1))
+        s.set_title(titles[i])
+        plt.tight_layout()
+        plt.imshow(li[i], interpolation='none')
+        plt.xticks([])
+        plt.yticks([])
+
+    
+
+
 def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -261,10 +289,11 @@ def main():
     assert prim_style_img.size() == sec_style_img.size(), \
         "we need to import style and content images of the same size"
 
-    unloader = transforms.ToPILImage()  # reconvert into PIL image
+    #unloader = transforms.ToPILImage()  # reconvert into PIL image
 
-    plt.ion()
+    #plt.ion()
 
+    """
     def imshow(tensor, title=None):
         image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
         image = image.squeeze(0)  # remove the fake batch dimension
@@ -279,6 +308,7 @@ def main():
     imshow(prim_style_img, title='Primary Style Image')
     plt.figure()
     imshow(sec_style_img, title='Secondary Style Image')
+    """
 
     # import the model from pytorch pretrained models
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
@@ -306,14 +336,21 @@ def main():
         input_img = torch.randn(sec_style_img.data.size(), device=device)
 
     # add the original input image to the figure:
-    plt.figure()
-    imshow(input_img, title='Input Image')
+    #plt.figure()
+    #imshow(input_img, title='Input Image')
+
+
+    input_img_copy = input_img.clone() # since we modify the input image
 
     output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
                                 prim_style_img, sec_style_img, input_img, device, heatmap)
 
-    plt.figure()
-    imshow(output, title='Output Image')
+    #plt.figure()
+    #imshow(output, title='Output Image')
+
+
+    visualize(prim_style_img, sec_style_img, input_img_copy, output)
+
 
     # sphinx_gallery_thumbnail_number = 4
     plt.ioff()
