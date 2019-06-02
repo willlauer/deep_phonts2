@@ -6,12 +6,6 @@ images (directory): containing all of the image data that we use as inputs to th
 
 outputs (directory): contains all of the style transfer outputs, in form _style_[alphabet1]_content_[alphabet2].png 
 
-
+# Data is from:
 https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
-
-For the milestone:
-
-distance transform implementation
-
-test black and white images as well as color images
-
+(We're only using Capitals_colorGrad64)
