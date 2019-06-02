@@ -68,7 +68,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             """
             Only add this for the first layer
             """
-            USE_DISTANCE = False
+            USE_DISTANCE = True
 
             if USE_DISTANCE:
                 x_content = model(content_img).detach()
@@ -183,7 +183,7 @@ def load_or_train_classifier(model_name):
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
                        content_img, style_img, input_img, device, heatmap, num_steps=300,
-                       style_weight=1000000, content_weight=1, distance_weight=1):
+                       style_weight=1000000, content_weight=1, distance_weight=75):
     """
     Run the style transfer
     """
@@ -273,11 +273,11 @@ def main():
         transforms.ToTensor()])  # transform it into a torch tensor
 
 
-    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png")
+    style_img, _ = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png")
     #style_img, _ = ut_image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png",\
     #                                loader, device, reshape=True)
 
-    content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png",
+    content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/test/keyrialt.0.2.png",
                                         get_heatmap=True)
     #content_img, heatmap = ut_image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", \
     #                                        loader, device, reshape=True, get_heatmap=True)
