@@ -37,10 +37,7 @@ class Solver:
             num_samples = 0
 
             for x, y in self.val_loader:
-<<<<<<< HEAD
                 y = y.type(torch.long)
-=======
->>>>>>> refs/remotes/origin/master
                 scores, _, _ = self.model.forward(x)
                 _, preds = scores.max(1)
                 num_correct += (preds == y).sum()
@@ -56,11 +53,7 @@ class Solver:
             num_samples = 0
 
             for x, y in self.train_loader:
-<<<<<<< HEAD
                 y = y.type(torch.long)
-=======
-
->>>>>>> refs/remotes/origin/master
                 if count == 6: # do this for 6 batches
                     break
                 count += 1
@@ -141,22 +134,14 @@ class Solver:
     def train(self, num_epochs):
 
         optimizer = torch.optim.Adam(self.model.parameters())
-<<<<<<< HEAD
-=======
-
->>>>>>> refs/remotes/origin/master
         for ep in range(num_epochs):
 
             ct = 0
             print('Epoch {}'.format(ep))
             for x,y in self.train_loader:
 
-<<<<<<< HEAD
                 # to keep F.cross_entropy happy
                 y = y.type(torch.long)
-=======
-                print(ct)
->>>>>>> refs/remotes/origin/master
 
                 optimizer.zero_grad()
                 scores, _, _ = self.model.forward(x)

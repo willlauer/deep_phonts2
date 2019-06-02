@@ -12,13 +12,8 @@ params = {
     "train_lr": 0.1,
     "transfer_lr": 0.1,
 
-<<<<<<< HEAD
     "batch_size_train": 100,
     "batch_size_val": 100 ,
-=======
-    "batch_size_train": 3000,
-    "batch_size_val": 1000,
->>>>>>> refs/remotes/origin/master
 
     "print_every": 10,
 
