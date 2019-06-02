@@ -14,6 +14,7 @@ import torchvision.models as models
 import copy
 import numpy as np
 
+from hyper_params import params
 
 
 
@@ -52,6 +53,43 @@ class ContentLoss(nn.Module):
         self.loss = F.mse_loss(x, self.target)
         return x
 
+
+class ClassificationLoss(nn.Module):
+
+    def __init__(self, classification_model):
+
+        super(ClassificationLoss, self).__init__()
+        
+        self.classification_model = classification_model
+        
+        for param in self.classification_model.parameters():
+            # freeze the weights in the classification network
+            param.require_grad = False
+
+    
+    def forward(self, x):
+        
+        # This should take in the full 5x5 grid of characters, and should run classfication on each,
+        # computing the softmax cross-entropy loss. By the fixed nature of our data samples, we know 
+        # the ground truth of what the character at each position is supposed to be. The total classification
+        # loss of this sample x will be the sum of the differences between each confidence and 1
+        #print('__Forward')
+        dim = params['input_character_dim']
+        self.loss = torch.zeros(1)
+
+        for i in range(5):
+            for j in range(5):
+
+                # x_letter should be of dimension (batch_size, 3, input_character_dim, input_character_dim)
+                x_letter = x[:, :, i * dim: (i+1) * dim, j * dim: (j+1) * dim]
+                #print(i, j)
+                # print('x shape', x.shape, x_letter.shape)
+
+                y = (torch.ones(x.shape[0]) * (i * 5 + j)).type(torch.long)
+                scores, _, _ = self.classification_model.forward(x_letter)
+                self.loss += F.cross_entropy(scores, y)
+
+        return x
 
 
 

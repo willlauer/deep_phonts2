@@ -7,7 +7,7 @@ params = {
     "style_weight": 0.7,
 
     "train_num_epochs": 1,
-    "transfer_num_iters": 50000,
+    "transfer_num_iters": 500,
 
     "train_lr": 0.1,
     "transfer_lr": 0.1,

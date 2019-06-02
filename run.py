@@ -21,19 +21,20 @@ from hyper_params import params
 
 import numpy as np
 
-from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, Classification
-from utils import * #content_layers_default, style_layers_default, im_reshape
+from custom import *
+from utils import *
 
 from silhoutte import get_heatmap_from_greyscale
 
-def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
+def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
                                style_img, content_img, device, heatmap,
                                content_layers=content_layers_default,
-                               style_layers=style_layers_default, use_classification_loss=False):
+                               style_layers=style_layers_default):
 
     """
 
     :param cnn:
+    :param classifier:
     :param normalization_mean:
     :param normalization_std:
     :param style_img:
@@ -45,7 +46,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     :param style_layers:
     :return:
     """
-
+    print('get style model and losses')
     cnn = copy.deepcopy(cnn)
 
     # normalization module
@@ -66,16 +67,23 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
         if i == 0:
             """
-            Only add this for the first layer
+            Only add these for the first layer
             """
-            USE_DISTANCE = False
-
             if USE_DISTANCE:
                 x_content = model(content_img).detach()
                 distance_loss = DistanceTransform(x_content, heatmap)
                 model.add_module("distance_loss", distance_loss)
             else:
                 distance_loss = None
+
+
+            if USE_CLASSIFICATION:
+                classification_loss = ClassificationLoss(classifier)
+                model.add_module("classification_loss", classification_loss)
+            else:
+                classification_loss = None
+
+
 
         if isinstance(layer, nn.Conv2d):
             i += 1
@@ -95,8 +103,13 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
         model.add_module(name, layer)
 
+        #print('content layers', content_layers)
+        #print('style layers', style_layers)
+
+
         if name in content_layers:
             # add content loss:
+            #print('c', name)
             target = model(content_img).detach()
             content_loss = ContentLoss(target)
             model.add_module("content_loss_{}".format(i), content_loss)
@@ -104,6 +117,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
         if name in style_layers:
             # add style loss:
+            #print('s', name)
             target_feature = model(style_img).detach()
             style_loss = StyleLoss(target_feature)
             model.add_module("style_loss_{}".format(i), style_loss)
@@ -115,13 +129,9 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             break
 
 
-
     model = model[:(i + 1)]
 
-
-
-
-    return model, style_losses, content_losses, distance_loss
+    return model, style_losses, content_losses, distance_loss, classification_loss
 
 
 
@@ -181,18 +191,16 @@ def load_or_train_classifier(model_name):
 
 
 
-def run_style_transfer(cnn, normalization_mean, normalization_std,
+def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
                        content_img, style_img, input_img, device, heatmap, num_steps=300,
-                       style_weight=1000000, content_weight=1, distance_weight=1):
+                       style_weight=1000000, content_weight=1, distance_weight=1, classifier_weight=1000):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
 
-
-
-    model, style_losses, content_losses, dl = get_style_model_and_losses(cnn,
-        normalization_mean, normalization_std, style_img, content_img, device, heatmap)
+    model, style_losses, content_losses, distance_loss, classifier_loss = get_style_model_and_losses(cnn,
+        classifier, normalization_mean, normalization_std, style_img, content_img, device, heatmap)
     optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
@@ -218,12 +226,21 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             style_score *= style_weight
             content_score *= content_weight
 
-            loss = 0
-            if dl is not None:
-                distance_score = distance_weight * dl.loss
-                loss = style_score + content_score + distance_score
-            else:
-                loss = style_score + content_score
+            loss = style_score + content_score
+
+
+            if distance_loss is not None:
+                distance_score = distance_weight * distance_loss.loss
+                loss += distance_score
+
+            if classifier_loss is not None:
+
+                # Then we are also interested in computing accuracy for each of the 
+                # training examples. For each square in the 5x5 grid, we should compute the 
+                # softmax loss as defined by our classifier and add it to the total
+                
+                classifier_score = classifier_weight * classifier_loss.loss
+                loss += classifier_score.squeeze()
 
             loss.backward()
 
@@ -231,19 +248,20 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             if run[0] % 50 == 0:
                 print("run {}:".format(run))
 
-                if dl is not None:
+                if classifier_loss is not None:
+                    print('Style Loss : {:4f} Content Loss: {:4f} Classifier Loss: {:4f}'.format(
+                        style_score.item(), content_score.item(), classifier_score.item()))
+                
+                elif distance_loss is not None:
                     print('Style Loss : {:4f} Content Loss: {:4f} Distance Loss: {:4f}'.format(
                         style_score.item(), content_score.item(), distance_score.item()))
+                
                 else:
                     print('Style Loss : {:4f} Content Loss: {:4f}'.format(
                         style_score.item(), content_score.item()))
                 print()
 
-            if dl is not None:
-                return style_score + content_score + distance_score
-            else:
-                return style_score + content_score
-
+            return loss
 
         optimizer.step(closure)
 
@@ -274,18 +292,10 @@ def main():
 
 
     style_img, _ = image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png")
-    #style_img, _ = ut_image_loader("./data/images/Capitals_colorGrad64/train/8blimro.0.1.png",\
-    #                                loader, device, reshape=True)
 
     content_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png",
                                         get_heatmap=True)
-    #content_img, heatmap = ut_image_loader("./data/images/Capitals_colorGrad64/train/18thCtrKurStart.0.2.png", \
-    #                                        loader, device, reshape=True, get_heatmap=True)
-
-
-
-    # print(style_img.shape, content_img.shape)
-
+   
 
 
     # Show some of the images from the dataset
@@ -327,7 +337,7 @@ def main():
     # error, which the pylint comments disables locally
     # pylint: disable=E1121
     print("starting model creation")
-    classification = load_or_train_classifier("classification_model.pt")
+    classifier = load_or_train_classifier("classification_model.pt")
     print("ending model creation")
     # pylint: enable=E1121
 
@@ -352,7 +362,7 @@ def main():
     imshow(input_img, title='Input Image')
 
 
-    output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
+    output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
                                 content_img, style_img, input_img, device, heatmap)
 
     plt.figure()
