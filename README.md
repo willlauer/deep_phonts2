@@ -13,12 +13,17 @@ Test 2: Remove layers and go deeper [conv(1,3,5,7,9)]
 
 Test 3: Extremely sparse layer sampling [conv(1,5,9)]
 
+Will (1,2,3)
+
 Test 5: Only sample early layers [conv(1,2,3)]
 Nick
 Test 6: Ignore early layers [conv(4,5,6)]
 Nick
 Test 7: Sparsity starting at deeper layers [conv(4, 6, 8, 10)]
 Nick
+
+Store results like layer_test_[convlayers].png. e.g. layer_test46810.png
+
 
 - [ ] experiment with weights
 
