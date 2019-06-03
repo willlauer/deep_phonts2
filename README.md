@@ -1,6 +1,12 @@
 # deep_phonts2
 Living and learning. This time with pre-trained weights and more interesting data!
 
+Todo:
+
+- [ ] experiment with different layers in content loss
+- [ ] experiment with weights
+- [ ] defuck the style
+- [ ] 
 
 images (directory): containing all of the image data that we use as inputs to the model
 
