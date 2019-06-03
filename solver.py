@@ -11,10 +11,7 @@ from hyper_params import params
 
 
 
-
-
 class Solver:
-
 
     def __init__(self, model, train_loader, val_loader):
         

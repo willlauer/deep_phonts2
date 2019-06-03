@@ -25,16 +25,17 @@ from custom import * #ContentLoss, StyleLoss, Normalization, DistanceTransform, 
 from utils import * #style_layers_default, im_reshape
 
 from silhoutte import get_heatmap_from_greyscale
+import sys
 
-USE_DISTANCE = True
-USE_RANDOM_NOISE = True
 
-def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
+def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
                                prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap,
-                               style_layers=style_layers_default, use_classification_loss=False):
+                               style_layers=style_layers_default, use_distance=False,
+                               use_classification=False):
 
     """
     :param cnn:
+    :param classifier:
     :param normalization_mean:
     :param normalization_std:
     :param prim_style_img:
@@ -47,6 +48,8 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     :param style_layers:
     :return:
     """
+    print('get style model and losses')
+    print('use_distance, use_classification', use_distance, use_classification)
 
     cnn = copy.deepcopy(cnn)
 
@@ -67,10 +70,11 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
         if i == 0:
             """
-            Only add this for the first layer
+            Only add these for the first layer
             """
 
-            if USE_DISTANCE:
+
+            if use_distance:
                 prim_content = model(prim_style_img).detach()
                 sec_content = model(sec_style_img).detach()
                 prim_distance_loss = DistanceTransform(prim_content, prim_heatmap)
@@ -80,6 +84,15 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             else:
                 prim_distance_loss = None
                 sec_distance_loss = None
+
+
+            if use_classification:
+                classification_loss = ClassificationLoss(classifier)
+                model.add_module("classification_loss", classification_loss)
+            else:
+                classification_loss = None
+
+
 
         if isinstance(layer, nn.Conv2d):
             i += 1
@@ -119,7 +132,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
     model = model[:(i + 1)]
 
-    return model, prim_style_losses, sec_style_losses, prim_distance_loss, sec_distance_loss
+    return model, prim_style_losses, sec_style_losses, prim_distance_loss, sec_distance_loss, classification_loss
 
 def get_input_optimizer(input_img):
     # this line to show that input is a parameter that requires a gradient
@@ -166,16 +179,21 @@ def load_or_train_classifier(model_name):
 
     return model
 
-def run_style_transfer(cnn, normalization_mean, normalization_std,
-                       prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device, num_steps=1500,
-                       prim_style_weight=1000, sec_style_weight=1000, prim_dist_weight=2000, sec_dist_weight=2000):
+def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
+                       prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device, num_steps=300,
+                       prim_style_weight=1000, sec_style_weight=1000, prim_dist_weight=2000, sec_dist_weight=2000,
+                       classifier_weight=500, use_distance=False, use_classification=False):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
+    print('use_distance, use_classification', use_distance, use_classification)
 
-    model, prim_style_losses, sec_style_losses, prim_distance_losses, sec_distance_losses = get_style_model_and_losses(cnn,
-                                                                                             normalization_mean, normalization_std, prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap)
+
+    model, prim_style_losses, sec_style_losses, prim_distance_losses, sec_distance_losses, classifier_loss = get_style_model_and_losses(cnn,
+                    classifier, normalization_mean, normalization_std, prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap,
+                    use_distance=use_distance, use_classification=use_classification)
+
     optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
@@ -202,12 +220,16 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
             loss = 0
             #if sec_distance_losses is not None:
-            if USE_DISTANCE:
+            if use_distance:
                 prim_distance_score = prim_dist_weight * prim_distance_losses.loss
                 sec_distance_score = sec_dist_weight * sec_distance_losses.loss
                 loss = prim_style_score + sec_style_score + prim_distance_score + sec_distance_score
             else:
                 loss = prim_style_score + sec_style_score
+            
+            if use_classification:
+                classifier_score = classifier_weight * classifier_loss.loss
+                loss += classifier_score.squeeze()
 
             loss.backward()
 
@@ -215,17 +237,21 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             if run[0] % 50 == 0:
                 print("run {}:".format(run))
 
-                #if sec_distance_losses is not None:
-                if USE_DISTANCE:
+                if use_distance:
                     print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f} Primary Distance Loss: {:4f} Secondary Distance Loss: {:4f}'.format(
                         prim_style_score.item(), sec_style_score.item(), prim_distance_score.item(), sec_distance_score.item()))
+
                 else:
                     print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f}'.format(
                         prim_style_score.item(), sec_style_score.item()))
+
+                if classifier_loss is not None:
+                    print('Classifier Loss: {:4f}'.format(classifier_score.item()))
+
                 print()
 
             #if sec_distance_losses is not None:
-            if USE_DISTANCE:
+            if use_distance:
                 return prim_style_score + sec_style_score + prim_distance_score + sec_distance_score
             else:
                 return prim_style_score + sec_style_score
@@ -237,7 +263,40 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
     return input_img
 
+
+
+def visualize(a, b, c, d):
+    """
+    Display the four images in a single plot
+    a, b, c, d => prim_style, sec_style, input_img, output_img
+    """
+    a, b, c, d = a.cpu().clone(), b.cpu().clone(), c.cpu().clone(), d.cpu().clone()
+    a, b, c, d = a.squeeze(), b.squeeze(), c.squeeze(), d.squeeze()
+
+    unloader = transforms.ToPILImage()  # reconvert into PIL image
+
+    titles = ["prim_style", "sec_style", "input_img", "output_img"]
+    li = [unloader(a), unloader(b), unloader(c), unloader(d)]
+    
+    fig = plt.figure()
+
+    for i in range(len(li)):
+        s = plt.subplot(2, 2, (i+1))
+        s.set_title(titles[i])
+        plt.tight_layout()
+        plt.imshow(li[i], interpolation='none')
+        plt.xticks([])
+        plt.yticks([])
+
+    
+
+
 def main():
+
+    use_distance = '-d' in sys.argv
+    use_classification = '-c' in sys.argv
+
+    print('use_distance, use_classification', use_distance, use_classification)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -258,24 +317,6 @@ def main():
     assert prim_style_img.size() == sec_style_img.size(), \
         "we need to import style and content images of the same size"
 
-    unloader = transforms.ToPILImage()  # reconvert into PIL image
-
-    plt.ion()
-
-    def imshow(tensor, title=None):
-        image = tensor.cpu().clone()  # we clone the tensor to not do changes on it
-        image = image.squeeze(0)  # remove the fake batch dimension
-        image = unloader(image)
-        plt.imshow(image)
-        if title is not None:
-            plt.title(title)
-        plt.pause(0.001)  # pause a bit so that plots are updated
-
-    # print content and style images
-    plt.figure()
-    imshow(prim_style_img, title='Primary Style Image')
-    plt.figure()
-    imshow(sec_style_img, title='Secondary Style Image')
 
     # import the model from pytorch pretrained models
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
@@ -286,7 +327,7 @@ def main():
     # error, which the pylint comments disables locally
     # pylint: disable=E1121
     print("starting model creation")
-    classification = load_or_train_classifier("classification_model.pt")
+    classifier = load_or_train_classifier("classification_model.pt")
     print("ending model creation")
     # pylint: enable=E1121
 
@@ -296,6 +337,7 @@ def main():
     cnn_normalization_mean = torch.from_numpy(np.array([0.485, 0.456, 0.406])).to(device)
     cnn_normalization_std = torch.from_numpy(np.array([0.229, 0.224, 0.225])).to(device)
 
+    USE_RANDOM_NOISE = True
     if USE_RANDOM_NOISE:
         input_img = torch.randn(prim_style_img.data.size(), device=device)
         print("Using random image as base")
@@ -304,14 +346,16 @@ def main():
         print("Using primary style image as base")
 
     # add the original input image to the figure:
-    plt.figure()
-    imshow(input_img, title='Input Image')
+    #plt.figure()
+    #imshow(input_img, title='Input Image')
 
-    output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                                prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device)
+    input_img_copy = input_img.clone() # since we modify the input image
 
-    plt.figure()
-    imshow(output, title='Output Image')
+    output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
+                                prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device,
+                                use_distance=use_distance, use_classification=use_classification)
+
+    visualize(prim_style_img, sec_style_img, input_img_copy, output)
 
     # sphinx_gallery_thumbnail_number = 4
     plt.ioff()
