@@ -46,6 +46,7 @@ Some letters aren't fully visible, have missing bits, etc. Might be easier to do
 
 - [ ] single character trials
 
+- [ ] try style loss with several layers, using color images
 
 images (directory): containing all of the image data that we use as inputs to the model
 
@@ -55,3 +56,7 @@ outputs (directory): contains all of the style transfer outputs, in form _style_
 https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
 We're only using Capitals_colorGrad64. Download it, move it into the main deep_phonts2 directory, and run 
 tar -zxvf Capitals_colorGrad64.tar.gz -C ./data/images
+
+
+# Noteworthy
+Distance loss can definitely handle the character shapes, getting artifacts from both characters. 
