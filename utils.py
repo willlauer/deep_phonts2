@@ -16,11 +16,6 @@ from hyper_params import params
 
 import time
 
-
-USE_DISTANCE = False
-USE_CLASSIFICATION = True
-
-
 # constant type for image, heatmap, and label tensors
 my_dtype = torch.float
 
@@ -32,11 +27,6 @@ resize_marker = '_resized'
 
 view_every = 200
 
-# This should be set to false for the first time running the model, so that it will be
-# trained for classification on some of the training dataset
-# After the first run, Classifier_is_trained should
-# be set to True. We then load the model and freeze the weights. 
-CLASSIFIER_IS_TRAINED = False 
 
 def get_classification_layers(sizes):
     """
