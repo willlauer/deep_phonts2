@@ -161,7 +161,7 @@ def load_or_train_classifier(model_name):
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
                        prim_style_img, sec_style_img, input_img, device, heatmap, num_steps=300,
-                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=75):
+                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=2000):
     """
     Run the style transfer
     """
@@ -238,7 +238,8 @@ def main():
         transforms.Resize(imsize),  # scale imported image
         transforms.ToTensor()])  # transform it into a torch tensor
 
-    prim_style_img, _ = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png")
+    # prim_style_img, _ = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png")
+    prim_style_img, _ = image_loader("./data/images/blue_texture.jpg")
 
     sec_style_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/test/keyrialt.0.2.png",
                                         get_heatmap=True)
@@ -296,7 +297,7 @@ def main():
     imshow(input_img, title='Input Image')
 
     output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                                prim_style_img, sec_style_img, input_img, device, heatmap)
+                                prim_style_img, sec_style_img, input_img, device, heatmap, num_steps=100)
 
     plt.figure()
     imshow(output, title='Output Image')
