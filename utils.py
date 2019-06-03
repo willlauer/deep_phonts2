@@ -23,6 +23,7 @@ my_dtype = torch.float
 style_layers_default = ['conv_4'] #['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
 
 
+
 resize_marker = '_resized'
 
 view_every = 200
