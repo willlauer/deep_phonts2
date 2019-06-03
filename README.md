@@ -6,7 +6,7 @@ Todo:
 - [ ] experiment with different layers in content loss
 - [ ] experiment with weights
 - [ ] defuck the style
-- [ ] 
+- [ ] resolve noise in letters
 
 images (directory): containing all of the image data that we use as inputs to the model
 
