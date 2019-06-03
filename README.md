@@ -15,6 +15,11 @@ Test 3: Extremely sparse layer sampling [conv(1,5,9)]
 
 Test 5: Only sample early layers [conv(1,2,3)]
 
+Test 6: Ignore early layers [conv(4,5,6)]
+
+Test 7: Sparsity starting at deeper layers [conv(4, 6, 8, 10)]
+
+
 - [ ] experiment with weights
 
 Vary weighting for primary style loss, secondary style loss, primary distance loss, secondary distance loss. Possibly use the classifier to modify these weights at runtime.
