@@ -30,7 +30,7 @@ import sys
 
 def get_style_model_and_losses(cnn, classifier, normalization_mean, normalization_std,
                                prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap,
-                               style_layers=style_layers_default, use_distance=False,
+                               layer_names=style_layers_default, use_distance=False,
                                use_classification=False):
 
     """
@@ -112,7 +112,7 @@ def get_style_model_and_losses(cnn, classifier, normalization_mean, normalizatio
 
         model.add_module(name, layer)
 
-        if name in style_layers:
+        if name in layer_names:
             # add primary style loss:
             target_feature = model(prim_style_img).detach()
             prim_style_loss = StyleLoss(target_feature)
@@ -127,7 +127,7 @@ def get_style_model_and_losses(cnn, classifier, normalization_mean, normalizatio
 
     # now we trim off the layers after the last content and style losses
     for i in range(len(model) - 1, -1, -1):
-        if isinstance(model[i], StyleLoss) or isinstance(model[i], StyleLoss):
+        if isinstance(model[i], ContentLoss) or isinstance(model[i], StyleLoss):
             break
 
     model = model[:(i + 1)]
@@ -296,7 +296,7 @@ def main():
     use_distance = '-d' in sys.argv
     use_classification = '-c' in sys.argv
 
-    print('use_distance, use_classification', use_distance, use_classification)
+    #print('use_distance, use_classification', use_distance, use_classification)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -353,7 +353,11 @@ def main():
 
     output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
                                 prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device,
-                                use_distance=use_distance, use_classification=use_classification)
+                                use_distance=use_distance, use_classification=use_classification,
+                                prim_style_weight=1000, 
+                                sec_style_weight=1000, 
+                                prim_dist_weight=2000, 
+                                sec_dist_weight=2000)
 
     visualize(prim_style_img, sec_style_img, input_img_copy, output)
 

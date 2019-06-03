@@ -20,7 +20,7 @@ import time
 my_dtype = torch.float
 
 # desired depth layers to compute style/content losses :
-style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
+style_layers_default = ['conv_4'] #['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
 
 
 resize_marker = '_resized'

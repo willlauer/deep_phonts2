@@ -21,5 +21,4 @@ params = {
     "input_character_dim": 32
 
 
-
 }
