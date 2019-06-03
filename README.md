@@ -25,6 +25,10 @@ After the final report, before the poster session.
 
 Some letters aren't fully visible, have missing bits, etc. Might be easier to do in post-processing. Outline of the character is supposed to be handled by distance loss, the fill of the character is handled by the style loss.
 
+
+- [ ] single character trials
+
+
 images (directory): containing all of the image data that we use as inputs to the model
 
 outputs (directory): contains all of the style transfer outputs, in form _style_[alphabet1]_content_[alphabet2].png 
