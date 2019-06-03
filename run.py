@@ -26,8 +26,11 @@ from utils import * #style_layers_default, im_reshape
 
 from silhoutte import get_heatmap_from_greyscale
 
+USE_DISTANCE = True
+USE_RANDOM_NOISE = True
+
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
-                               prim_style_img, sec_style_img, device, heatmap,
+                               prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap,
                                style_layers=style_layers_default, use_classification_loss=False):
 
     """
@@ -37,7 +40,8 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
     :param prim_style_img:
     :param sec_style_img:
     :param device:
-    :param heatmap: should be a tensor as in the paper
+    :param prim_heatmap: should be a tensor as in the paper
+    :param sec_heatmap: should be a tensor as in the paper
 
     :param content_layers:
     :param style_layers:
@@ -65,14 +69,17 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
             """
             Only add this for the first layer
             """
-            USE_DISTANCE = False
 
             if USE_DISTANCE:
-                x_content = model(sec_style_img).detach()
-                distance_loss = DistanceTransform(x_content, heatmap)
-                model.add_module("distance_loss", distance_loss)
+                prim_content = model(prim_style_img).detach()
+                sec_content = model(sec_style_img).detach()
+                prim_distance_loss = DistanceTransform(prim_content, prim_heatmap)
+                model.add_module("prim_distance_loss", prim_distance_loss)
+                sec_distance_loss = DistanceTransform(sec_content, sec_heatmap)
+                model.add_module("sec_distance_loss", sec_distance_loss)
             else:
-                distance_loss = None
+                prim_distance_loss = None
+                sec_distance_loss = None
 
         if isinstance(layer, nn.Conv2d):
             i += 1
@@ -112,7 +119,7 @@ def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
 
     model = model[:(i + 1)]
 
-    return model, prim_style_losses, sec_style_losses, distance_loss
+    return model, prim_style_losses, sec_style_losses, prim_distance_loss, sec_distance_loss
 
 def get_input_optimizer(input_img):
     # this line to show that input is a parameter that requires a gradient
@@ -160,15 +167,15 @@ def load_or_train_classifier(model_name):
     return model
 
 def run_style_transfer(cnn, normalization_mean, normalization_std,
-                       prim_style_img, sec_style_img, input_img, device, heatmap, num_steps=300,
-                       prim_style_weight=1000, sec_style_weight=1000, distance_weight=1):
+                       prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device, num_steps=1500,
+                       prim_style_weight=1000, sec_style_weight=1000, prim_dist_weight=2000, sec_dist_weight=2000):
     """
     Run the style transfer
     """
     print('Building the style transfer model..')
 
-    model, prim_style_losses, sec_style_losses, distance_losses = get_style_model_and_losses(cnn,
-    normalization_mean, normalization_std, prim_style_img, sec_style_img, device, heatmap)
+    model, prim_style_losses, sec_style_losses, prim_distance_losses, sec_distance_losses = get_style_model_and_losses(cnn,
+                                                                                             normalization_mean, normalization_std, prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap)
     optimizer = get_input_optimizer(input_img)
 
     print('Optimizing..')
@@ -194,9 +201,11 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             sec_style_score *= sec_style_weight
 
             loss = 0
-            if distance_losses is not None:
-                distance_score = distance_weight * distance_losses.loss
-                loss = prim_style_score + sec_style_score + distance_score
+            #if sec_distance_losses is not None:
+            if USE_DISTANCE:
+                prim_distance_score = prim_dist_weight * prim_distance_losses.loss
+                sec_distance_score = sec_dist_weight * sec_distance_losses.loss
+                loss = prim_style_score + sec_style_score + prim_distance_score + sec_distance_score
             else:
                 loss = prim_style_score + sec_style_score
 
@@ -206,19 +215,20 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
             if run[0] % 50 == 0:
                 print("run {}:".format(run))
 
-                if distance_losses is not None:
-                    print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f} Distance Loss: {:4f}'.format(
-                        prim_style_score.item(), sec_style_score.item(), distance_score.item()))
+                #if sec_distance_losses is not None:
+                if USE_DISTANCE:
+                    print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f} Primary Distance Loss: {:4f} Secondary Distance Loss: {:4f}'.format(
+                        prim_style_score.item(), sec_style_score.item(), prim_distance_score.item(), sec_distance_score.item()))
                 else:
                     print('Primary Style Loss : {:4f} Secondary Style Loss: {:4f}'.format(
                         prim_style_score.item(), sec_style_score.item()))
                 print()
 
-            if distance_losses is not None:
-                return prim_style_score + sec_style_score + distance_score
+            #if sec_distance_losses is not None:
+            if USE_DISTANCE:
+                return prim_style_score + sec_style_score + prim_distance_score + sec_distance_score
             else:
                 return prim_style_score + sec_style_score
-
 
         optimizer.step(closure)
 
@@ -238,9 +248,10 @@ def main():
         transforms.Resize(imsize),  # scale imported image
         transforms.ToTensor()])  # transform it into a torch tensor
 
-    prim_style_img, _ = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png")
+    prim_style_img, prim_heatmap = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png",
+                                                get_heatmap=True)
 
-    sec_style_img, heatmap = image_loader("./data/images/Capitals_colorGrad64/test/keyrialt.0.2.png",
+    sec_style_img, sec_heatmap = image_loader("./data/images/Capitals_colorGrad64/test/keyrialt.0.2.png",
                                         get_heatmap=True)
 
     # ensure style and content image are the same size
@@ -285,18 +296,19 @@ def main():
     cnn_normalization_mean = torch.from_numpy(np.array([0.485, 0.456, 0.406])).to(device)
     cnn_normalization_std = torch.from_numpy(np.array([0.229, 0.224, 0.225])).to(device)
 
-    USE_RANDOM_NOISE = False
-    if not USE_RANDOM_NOISE:
-        input_img = sec_style_img.clone()
-    else:   # if you want to use white noise instead uncomment the below line:
-        input_img = torch.randn(sec_style_img.data.size(), device=device)
+    if USE_RANDOM_NOISE:
+        input_img = torch.randn(prim_style_img.data.size(), device=device)
+        print("Using random image as base")
+    else:
+        input_img = prim_style_img.clone()
+        print("Using primary style image as base")
 
     # add the original input image to the figure:
     plt.figure()
     imshow(input_img, title='Input Image')
 
     output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                                prim_style_img, sec_style_img, input_img, device, heatmap)
+                                prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device)
 
     plt.figure()
     imshow(output, title='Output Image')
