@@ -288,15 +288,25 @@ def visualize(a, b, c, d):
         plt.xticks([])
         plt.yticks([])
 
-    
-
-
 def main():
 
     use_distance = '-d' in sys.argv
     use_classification = '-c' in sys.argv
 
-    #print('use_distance, use_classification', use_distance, use_classification)
+    #######################################
+    # Model Parameters
+
+    num_steps = 500
+    prim_style_weight = 1000
+    sec_style_weight = 1000
+    prim_dist_weight = 2000
+    sec_dist_weight = 2000
+
+    if use_distance:
+        prim_dist_scale = 1
+        sec_dist_scale = 1
+
+    #######################################
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -307,16 +317,15 @@ def main():
         transforms.Resize(imsize),  # scale imported image
         transforms.ToTensor()])  # transform it into a torch tensor
 
-    prim_style_img, prim_heatmap = image_loader("./data/images/Capitals_colorGrad64/test/ARACNE-CONDENSED_regular_italic.0.2.png",
-                                                get_heatmap=True)
+    prim_style_img, prim_heatmap = image_loader("./data/images/Capitals_colorGrad64/train/Karmakooma.0.2.png",
+                                                get_heatmap=True, scale=prim_dist_scale)
 
-    sec_style_img, sec_heatmap = image_loader("./data/images/Capitals_colorGrad64/test/keyrialt.0.2.png",
-                                        get_heatmap=True)
+    sec_style_img, sec_heatmap = image_loader("./data/images/Capitals_colorGrad64/train/Berlin Email Heavy.0.2.png",
+                                        get_heatmap=True, scale=sec_dist_scale)
 
     # ensure style and content image are the same size
     assert prim_style_img.size() == sec_style_img.size(), \
         "we need to import style and content images of the same size"
-
 
     # import the model from pytorch pretrained models
     cnn = models.vgg19(pretrained=True).features.to(device).eval()
@@ -353,11 +362,11 @@ def main():
 
     output = run_style_transfer(cnn, classifier, cnn_normalization_mean, cnn_normalization_std,
                                 prim_style_img, sec_style_img, input_img, prim_heatmap, sec_heatmap, device,
-                                use_distance=use_distance, use_classification=use_classification,
-                                prim_style_weight=1000, 
-                                sec_style_weight=1000, 
-                                prim_dist_weight=2000, 
-                                sec_dist_weight=2000)
+                                num_steps=num_steps, use_distance=use_distance, use_classification=use_classification,
+                                prim_style_weight=prim_style_weight,
+                                sec_style_weight=sec_style_weight,
+                                prim_dist_weight=prim_dist_weight,
+                                sec_dist_weight=sec_dist_weight)
 
     visualize(prim_style_img, sec_style_img, input_img_copy, output)
 

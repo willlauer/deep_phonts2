@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import imageio
 from scipy.ndimage.morphology import distance_transform_edt, distance_transform_cdt
+import matplotlib.pyplot as plt
 
 
 """
@@ -34,7 +35,7 @@ def visualize(edt_img, cdt_img):
     print ('just look at output image for now')
 
 
-def get_heatmap_from_greyscale(img):
+def get_heatmap_from_greyscale(img, scale):
     """
     :param img: a PIL image object
     :return: the heatmap output from distance_transform_edt
@@ -43,7 +44,13 @@ def get_heatmap_from_greyscale(img):
     print('shape', arr.shape)
 
     shadow = np.where(arr < 255, 0, 1)
-    edt_dist_matrix = distance_transform_edt(shadow) // 1
+    edt_dist_matrix = distance_transform_edt(shadow)
+    edt_dist_matrix = edt_dist_matrix**scale
+    #edt_dist_matrix /= np.max(np.abs(edt_dist_matrix), axis=0) #normalization
+
+    # plt.imshow(edt_dist_matrix, cmap="gray")
+    # plt.show()
+
 
     return Image.fromarray(edt_dist_matrix)
 

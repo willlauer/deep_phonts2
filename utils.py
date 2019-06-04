@@ -86,7 +86,7 @@ def im_reshape(image_name):
 
 
 
-def image_loader(image_name, get_heatmap=False, classification=False):
+def image_loader(image_name, get_heatmap=False, scale=1, classification=False):
     
     """
     Takes in the image name that we want to process
@@ -130,7 +130,7 @@ def image_loader(image_name, get_heatmap=False, classification=False):
         # TODO: for heatmap, convert directly from ndarray to tensor, then unsqueeze and send to device
 
         greyscale = image.convert("L")
-        heatmap = loader(get_heatmap_from_greyscale(greyscale)).unsqueeze(0).to(device, torch.float)
+        heatmap = loader(get_heatmap_from_greyscale(greyscale, scale)).unsqueeze(0).to(device, torch.float)
     else:
         heatmap = None
 
