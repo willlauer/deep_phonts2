@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="95ba44ec-c562-465a-9d94-7de5b1992e1a" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/images/neural-style/dancing.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/images/neural-style/picasso.jpg" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,8 +18,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2895">
-              <caret line="193" column="46" lean-forward="true" selection-start-line="193" selection-start-column="46" selection-end-line="193" selection-end-column="46" />
+            <state relative-caret-position="1642">
+              <caret line="336" column="89" selection-start-line="336" selection-start-column="89" selection-end-line="336" selection-end-column="89" />
               <folding>
                 <element signature="e#1#38#0" expanded="true" />
               </folding>
@@ -28,8 +31,8 @@
         <entry file="file://$PROJECT_DIR$/README.md">
           <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
             <state split_layout="SPLIT">
-              <first_editor relative-caret-position="120">
-                <caret line="8" column="30" selection-start-line="8" selection-start-column="30" selection-end-line="8" selection-end-column="30" />
+              <first_editor relative-caret-position="338">
+                <caret line="75" lean-forward="true" selection-start-line="75" selection-end-line="75" />
               </first_editor>
               <second_editor />
             </state>
@@ -40,7 +43,7 @@
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="153">
-              <caret line="300" lean-forward="true" selection-start-line="300" selection-end-line="300" />
+              <caret line="291" selection-start-line="291" selection-end-line="291" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -52,7 +55,7 @@
         <entry file="file://$PROJECT_DIR$/custom.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="312">
-              <caret line="105" column="22" lean-forward="true" selection-start-line="105" selection-start-column="22" selection-end-line="105" selection-end-column="22" />
+              <caret line="105" column="22" selection-start-line="105" selection-start-column="22" selection-end-line="105" selection-end-column="22" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -196,12 +199,12 @@
       <updated>1559443246285</updated>
       <workItem from="1559443253306" duration="419000" />
       <workItem from="1559443896969" duration="1563000" />
-      <workItem from="1559455659044" duration="14357000" />
+      <workItem from="1559455659044" duration="15158000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="16339000" />
+    <option name="totallyTimeSpent" value="17140000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="877" extended-state="6" />
@@ -255,7 +258,7 @@
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
-          <caret line="300" lean-forward="true" selection-start-line="300" selection-end-line="300" />
+          <caret line="291" selection-start-line="291" selection-end-line="291" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
           </folding>
@@ -265,7 +268,7 @@
     <entry file="file://$PROJECT_DIR$/custom.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="312">
-          <caret line="105" column="22" lean-forward="true" selection-start-line="105" selection-start-column="22" selection-end-line="105" selection-end-column="22" />
+          <caret line="105" column="22" selection-start-line="105" selection-start-column="22" selection-end-line="105" selection-end-column="22" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
@@ -274,8 +277,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2895">
-          <caret line="193" column="46" lean-forward="true" selection-start-line="193" selection-start-column="46" selection-end-line="193" selection-end-column="46" />
+        <state relative-caret-position="1642">
+          <caret line="336" column="89" selection-start-line="336" selection-start-column="89" selection-end-line="336" selection-end-column="89" />
           <folding>
             <element signature="e#1#38#0" expanded="true" />
           </folding>
@@ -285,8 +288,8 @@
     <entry file="file://$PROJECT_DIR$/README.md">
       <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
         <state split_layout="SPLIT">
-          <first_editor relative-caret-position="120">
-            <caret line="8" column="30" selection-start-line="8" selection-start-column="30" selection-end-line="8" selection-end-column="30" />
+          <first_editor relative-caret-position="338">
+            <caret line="75" lean-forward="true" selection-start-line="75" selection-end-line="75" />
           </first_editor>
           <second_editor />
         </state>
