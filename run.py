@@ -189,6 +189,8 @@ def run_style_transfer(cnn, classifier, normalization_mean, normalization_std,
     print('Building the style transfer model..')
     print('use_distance, use_classification', use_distance, use_classification)
 
+    prim_heatmap.data.clamp_(1,20)
+    sec_heatmap.data.clamp_(1,20)
 
     model, prim_style_losses, sec_style_losses, prim_distance_losses, sec_distance_losses, classifier_loss = get_style_model_and_losses(cnn,
                     classifier, normalization_mean, normalization_std, prim_style_img, sec_style_img, device, prim_heatmap, sec_heatmap,
@@ -296,14 +298,14 @@ def main():
     #######################################
     # Model Parameters
 
-    num_steps = 500
+    num_steps = 300
     prim_style_weight = 1000
     sec_style_weight = 1000
     prim_dist_weight = 2000
     sec_dist_weight = 2000
 
     if use_distance:
-        prim_dist_scale = 1
+        prim_dist_scale = 1.2
         sec_dist_scale = 1
 
     #######################################

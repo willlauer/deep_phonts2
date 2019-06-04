@@ -20,14 +20,11 @@ import time
 my_dtype = torch.float
 
 # desired depth layers to compute style/content losses :
-style_layers_default = ['conv_4'] #['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
-
-
+style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
 
 resize_marker = '_resized'
 
 view_every = 200
-
 
 def get_classification_layers(sizes):
     """
@@ -224,11 +221,6 @@ def create_special_font_dataset(device, path, mode):
     torch.save(data_y, './data/' + mode + "_data_y.pt")
 
     print('count = ', count)
-
-
-
-
-
 
 def get_classification_data_loader(training_batch_size, val_batch_size):
 
