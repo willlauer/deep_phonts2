@@ -64,6 +64,18 @@ Nic -
 
 
 
+# FONTS
+
+_TOP_SECRET_0.2.png
+
+
+Berlin Email Heavy.0.2.png
+
+01 Digit.0.1.png
+
+
+
+
 
 # Data is from:
 https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
