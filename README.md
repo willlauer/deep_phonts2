@@ -66,13 +66,13 @@ Nic -
 
 # FONTS
 
-_TOP_SECRET_0.2.png
+/Capitals_colorGrad64/train/_TOP_SECRET_0.2.png
 
+/Capitals_colorGrad64/train/Berlin Email Heavy.0.2.png
 
-Berlin Email Heavy.0.2.png
 /Capitals_colorGrad64/train/Karmakooma.0.2.png
 
-01 Digit.0.1.png
+/Capitals_colorGrad64/train/01 Digit.0.1.png
 
 
 
