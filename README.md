@@ -83,6 +83,3 @@ https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/
 We're only using Capitals_colorGrad64. Download it, move it into the main deep_phonts2 directory, and run 
 tar -zxvf Capitals_colorGrad64.tar.gz -C ./data/images
 
-
-# Noteworthy
-Distance loss can definitely handle the character shapes, getting artifacts from both characters. 
