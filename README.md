@@ -35,8 +35,6 @@ Store results like layer_test_[convlayers].png. e.g. layer_test46810.png
 Vary weighting for primary style loss, secondary style loss, primary distance loss, secondary distance loss. Possibly use the classifier to modify these weights at runtime.
 
 
-- [ ] defuck the style
-
 After the final report, before the poster session.
 
 - [ ] resolve noise in letters
